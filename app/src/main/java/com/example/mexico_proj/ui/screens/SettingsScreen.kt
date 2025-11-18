@@ -1,32 +1,202 @@
 package com.example.mexico_proj.ui.screens
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.mexico_proj.*
+import com.example.mexico_proj.AppState
+import com.example.mexico_proj.MockData
+import com.example.mexico_proj.UsabilityLogger
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
-    val settings = SettingsManager.settings
+    val currentMode = AppState.currentMode
+    val user = MockData.currentUser
 
-    Column(Modifier.padding(20.dp)) {
-        Text("Settings", style = MaterialTheme.typography.headlineMedium)
+    LaunchedEffect(Unit) {
+        UsabilityLogger.logNavigation("", "Settings", currentMode)
+    }
 
-        Spacer(Modifier.height(20.dp))
-
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clickable { navController.navigate("language") }
-                .padding(12.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary
         ) {
-            Text("Language", style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.weight(1f))
-            Text(settings.language.name)
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Perfil",
+                    tint = Color.White,
+                    modifier = Modifier.size(72.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = user.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // User information
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Text(
+                    text = "Información del Usuario",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                SettingItem(
+                    icon = Icons.Default.Person,
+                    label = "Nombre",
+                    value = user.name
+                )
+                Divider(modifier = Modifier.padding(vertical = 12.dp))
+
+                SettingItem(
+                    icon = Icons.Default.Info,
+                    label = "Nivel de Alfabetización",
+                    value = user.literacyLevel
+                )
+            }
+        }
+
+        // App information
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Text(
+                    text = "Configuración de la App",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                SettingItem(
+                    icon = Icons.Default.ColorLens,
+                    label = "Modo Actual",
+                    value = when (currentMode) {
+                        com.example.mexico_proj.AppMode.SPEECH_BASED -> "Basado en Voz (Azul)"
+                        com.example.mexico_proj.AppMode.IMAGE_BASED -> "Basado en Imágenes (Verde)"
+                    }
+                )
+            }
+        }
+
+        // View logs button
+        var showLogs by remember { mutableStateOf(false) }
+        
+        Button(
+            onClick = { showLogs = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Icon(Icons.Default.Info, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Ver Métricas de Usabilidad", style = MaterialTheme.typography.titleMedium)
+        }
+
+        if (showLogs) {
+            AlertDialog(
+                onDismissRequest = { showLogs = false },
+                title = { Text("Métricas de Usabilidad") },
+                text = {
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            UsabilityLogger.getSummary(),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showLogs = false }) {
+                        Text("Cerrar")
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(32.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
