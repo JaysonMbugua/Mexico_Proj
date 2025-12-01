@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">Mexico-Proj</string>
+    <string name="app_name">Trabajo Seguro</string>
+    <string name="home">Inicio</string>
+    <string name="jobs">Empleos</string>
+    <string name="receipt">Recibo</string>
+    <string name="settings">Ajustes</string>
+    <string name="switch_mode">Cambiar Modo</string>
 </resources>
