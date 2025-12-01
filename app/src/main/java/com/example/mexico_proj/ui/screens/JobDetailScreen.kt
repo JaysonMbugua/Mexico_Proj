@@ -19,20 +19,29 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mexico_proj.*
+import com.example.mexico_proj.data.AppDatabase
+import com.example.mexico_proj.data.JobEntity
 import com.example.mexico_proj.ui.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun JobDetailScreen(navController: NavController, jobId: Int) {
-    val job = MockData.jobs.find { it.id == jobId }
+    val context = LocalContext.current
+    val database = remember { AppDatabase.getDatabase(context) }
+    val scope = rememberCoroutineScope()
+    
+    var job by remember { mutableStateOf<JobEntity?>(null) }
     val currentMode = AppState.currentMode
     var showAcceptDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(jobId) {
         UsabilityLogger.logNavigation("JobList", "JobDetail", currentMode)
+        job = database.jobDao().getJobById(jobId)
     }
 
     if (job == null) {
@@ -40,10 +49,12 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Trabajo no encontrado")
+            CircularProgressIndicator()
         }
         return
     }
+    
+    val currentJob = job!!
 
     Column(
         modifier = Modifier
@@ -60,7 +71,7 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
                 modifier = Modifier.padding(20.dp)
             ) {
                 Text(
-                    text = job.title,
+                    text = currentJob.title,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -76,7 +87,7 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
                         modifier = Modifier.size(28.dp)
                     )
                     Text(
-                        text = job.payRate,
+                        text = currentJob.payRate,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -86,9 +97,9 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
         }
 
         // Safety indicator
-        val backgroundColor = if (job.hasBenefits && job.isSafe) SafeGreenBg else DangerRedBg
-        val iconColor = if (job.hasBenefits && job.isSafe) SafeGreen else DangerRed
-        val icon = if (job.hasBenefits && job.isSafe) Icons.Default.CheckCircle else Icons.Default.Warning
+        val backgroundColor = if (currentJob.hasBenefits && currentJob.isSafe) SafeGreenBg else DangerRedBg
+        val iconColor = if (currentJob.hasBenefits && currentJob.isSafe) SafeGreen else DangerRed
+        val icon = if (currentJob.hasBenefits && currentJob.isSafe) Icons.Default.CheckCircle else Icons.Default.Warning
 
         Card(
             modifier = Modifier
@@ -112,7 +123,7 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = if (job.hasBenefits && job.isSafe)
+                    text = if (currentJob.hasBenefits && currentJob.isSafe)
                         "✓ Trabajo seguro con beneficios"
                     else
                         "⚠ Precaución: Sin beneficios completos",
@@ -138,29 +149,29 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
                 DetailItem(
                     icon = Icons.Default.LocationOn,
                     label = "Ubicación",
-                    value = job.location
+                    value = currentJob.location
                 )
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 DetailItem(
                     icon = Icons.Default.Schedule,
                     label = "Horas por semana",
-                    value = job.hoursPerWeek
+                    value = currentJob.hoursPerWeek
                 )
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 DetailItem(
                     icon = Icons.Default.Description,
                     label = "Tipo de contrato",
-                    value = job.contractType
+                    value = currentJob.contractType
                 )
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 DetailItem(
-                    icon = if (job.hasBenefits) Icons.Default.Lock else Icons.Default.Block,
+                    icon = if (currentJob.hasBenefits) Icons.Default.Lock else Icons.Default.Block,
                     label = "Beneficios",
-                    value = if (job.hasBenefits) "Seguro médico incluido" else "Sin seguro médico",
-                    valueColor = if (job.hasBenefits) SafeGreen else DangerRed
+                    value = if (currentJob.hasBenefits) "Seguro médico incluido" else "Sin seguro médico",
+                    valueColor = if (currentJob.hasBenefits) SafeGreen else DangerRed
                 )
             }
         }
@@ -187,7 +198,7 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = job.description,
+                    text = currentJob.description,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -200,15 +211,15 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
         Button(
             onClick = {
                 showAcceptDialog = true
-                UsabilityLogger.completeTask("TASK3_ACCEPT_CONTRACT", currentMode, "Contract accepted: ${job.title}")
-                UsabilityLogger.logInteraction("CONTRACT_ACCEPT", currentMode, "Job: ${job.title}")
+                UsabilityLogger.completeTask("TASK3_ACCEPT_CONTRACT", currentMode, "Contract accepted: ${currentJob.title}")
+                UsabilityLogger.logInteraction("CONTRACT_ACCEPT", currentMode, "Job: ${currentJob.title}")
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .height(64.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (job.hasBenefits) SafeGreen else WarningOrange
+                containerColor = if (currentJob.hasBenefits) SafeGreen else WarningOrange
             )
         ) {
             Icon(
@@ -247,7 +258,7 @@ fun JobDetailScreen(navController: NavController, jobId: Int) {
             },
             text = {
                 Text(
-                    "Has aceptado el trabajo de ${job.title}. Recibirás más información pronto.",
+                    "Has aceptado el trabajo de ${currentJob.title}. Recibirás más información pronto.",
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             },

@@ -109,6 +109,11 @@ class MainActivity : ComponentActivity() {
                         composable("language") { 
                             LanguageSelectionScreen(navController) 
                         }
+                        
+                        // Add Job screen for employers
+                        composable("add_job") {
+                            AddJobScreen(navController)
+                        }
                     }
                 }
             }

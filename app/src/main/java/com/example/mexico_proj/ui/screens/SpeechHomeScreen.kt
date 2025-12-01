@@ -22,12 +22,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mexico_proj.*
+import com.example.mexico_proj.data.AppDatabase
 
 @Composable
 fun SpeechHomeScreen(navController: NavController) {
     val context = LocalContext.current
     val speechRecognizerManager = remember { SpeechRecognizerManager(context) }
     val ttsManager = remember { TextToSpeechManager(context) }
+    val database = remember { AppDatabase.getDatabase(context) }
+    val jobs by database.jobDao().getAllJobs().collectAsState(initial = emptyList())
+    
     val isListening by speechRecognizerManager.isListening.collectAsState()
     val isSpeaking by ttsManager.isSpeaking.collectAsState()
     
@@ -55,17 +59,17 @@ fun SpeechHomeScreen(navController: NavController) {
     }
 
     // Collect recognized text from SharedFlow - this will trigger for EVERY emission
-    LaunchedEffect(Unit) {
+    LaunchedEffect(jobs) {
         speechRecognizerManager.recognizedText.collect { recognizedText ->
             if (recognizedText.isNotBlank()) {
                 lastRecognizedText = recognizedText
-                val jobsText = MockData.jobs.joinToString(separator = ", ") { it.title }
+                val jobsText = jobs.joinToString(separator = ", ") { it.title }
                 when {
                     recognizedText.contains("buscar empleo", ignoreCase = true) || 
                     recognizedText.contains("buscar trabajo", ignoreCase = true) ||
                     recognizedText.contains("empleo", ignoreCase = true) ||
                     recognizedText.contains("trabajo", ignoreCase = true) -> {
-                        ttsManager.speak("Aquí están los trabajos disponibles: $jobsText. ¿Te interesa alguno?")
+                        ttsManager.speak("Hay ${jobs.size} trabajos disponibles: $jobsText. ¿Te interesa alguno?")
                     }
                     recognizedText.contains("ver mi pago", ignoreCase = true) ||
                     recognizedText.contains("mi pago", ignoreCase = true) ||
