@@ -14,26 +14,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mexico_proj.*
-import com.example.mexico_proj.ui.theme.Blue100
+import com.example.mexico_proj.ui.theme.*
 
 @Composable
 fun SpeechJobListScreen(navController: NavController) {
     var showVoiceInput by remember { mutableStateOf(false) }
     var selectedJobForAudio by remember { mutableStateOf<Job?>(null) }
 
-    LaunchedEffect(Unit) {
-        UsabilityLogger.startTask("TASK1_FIND_JOB", AppState.currentMode, "Speech-based job search")
-        UsabilityLogger.logNavigation("SpeechHome", "SpeechJobList", AppState.currentMode)
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Blue50)
     ) {
         // Header with audio prompt
         Card(
@@ -54,13 +50,13 @@ fun SpeechJobListScreen(navController: NavController) {
                     Icons.Default.VolumeUp,
                     contentDescription = "Audio",
                     modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Blue600
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "Hay ${MockData.jobs.size} empleos disponibles. Toca el ícono de audio para escuchar los detalles, o di el número del trabajo.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = Blue700
                 )
             }
         }
@@ -76,10 +72,8 @@ fun SpeechJobListScreen(navController: NavController) {
                     jobNumber = MockData.jobs.indexOf(job) + 1,
                     onAudioClick = {
                         selectedJobForAudio = job
-                        UsabilityLogger.logInteraction("AUDIO_PLAY", AppState.currentMode, "Job: ${job.title}")
                     },
                     onCardClick = {
-                        UsabilityLogger.logInteraction("JOB_SELECT", AppState.currentMode, "Job: ${job.title}")
                         navController.navigate("job_detail/${job.id}")
                     }
                 )
@@ -93,7 +87,7 @@ fun SpeechJobListScreen(navController: NavController) {
                 .fillMaxWidth()
                 .padding(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = Blue100
             )
         ) {
             Column(
@@ -110,18 +104,15 @@ fun SpeechJobListScreen(navController: NavController) {
                     modifier = Modifier
                         .size(70.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable {
-                            showVoiceInput = !showVoiceInput
-                            UsabilityLogger.logInteraction("VOICE_SELECT_TAP", AppState.currentMode, "Voice number selection")
-                        },
+                        .background(Blue600)
+                        .clickable { showVoiceInput = !showVoiceInput },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Mic,
                         contentDescription = "Voice",
                         modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = Color.White
                     )
                 }
             }
@@ -140,7 +131,6 @@ fun SpeechJobListScreen(navController: NavController) {
                     MockData.jobs.forEachIndexed { index, job ->
                         Button(
                             onClick = {
-                                UsabilityLogger.logInteraction("VOICE_NUMBER_SELECT", AppState.currentMode, "Job ${index + 1}: ${job.title}")
                                 navController.navigate("job_detail/${job.id}")
                                 showVoiceInput = false
                             },
@@ -182,7 +172,7 @@ fun SpeechJobListScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(12.dp))
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primary
+                        color = Blue600
                     )
                 }
             },
@@ -207,7 +197,7 @@ fun SpeechJobCard(
             .fillMaxWidth()
             .clickable(onClick = onCardClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Blue100
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -222,7 +212,7 @@ fun SpeechJobCard(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        MaterialTheme.colorScheme.primary,
+                        Blue600,
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -230,7 +220,7 @@ fun SpeechJobCard(
                 Text(
                     text = "$jobNumber",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -248,7 +238,7 @@ fun SpeechJobCard(
                 Text(
                     text = job.payRate,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Blue600,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -259,7 +249,7 @@ fun SpeechJobCard(
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        MaterialTheme.colorScheme.primaryContainer,
+                        Blue100,
                         CircleShape
                     )
             ) {
@@ -267,10 +257,9 @@ fun SpeechJobCard(
                     Icons.Default.VolumeUp,
                     contentDescription = "Play audio description",
                     modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Blue600
                 )
             }
         }
     }
 }
-

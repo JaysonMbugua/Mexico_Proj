@@ -3,11 +3,10 @@ package com.example.mexico_proj
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
@@ -21,6 +20,7 @@ import androidx.navigation.navArgument
 import com.example.mexico_proj.ui.components.AppBottomBar
 import com.example.mexico_proj.ui.screens.*
 import com.example.mexico_proj.ui.theme.MexicoProjTheme
+import com.example.mexico_proj.AppState
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,42 +28,46 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val currentMode by remember { derivedStateOf { AppState.currentMode } }
-            
-            MexicoProjTheme(appMode = currentMode) {
-                val navController = rememberNavController()
+            val navController = rememberNavController()
 
+            // Determine if the FAB and Bottom Bar should be shown
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            val shouldShowMainUI = currentRoute in listOf(
+                "speech_home", "image_home", "speech_jobs", "image_jobs", "receipt", "settings"
+            )
+
+            MexicoProjTheme(appMode = currentMode) {
                 Scaffold(
                     bottomBar = {
-                        AppBottomBar(navController)
+                        if (shouldShowMainUI) {
+                            AppBottomBar(navController)
+                        }
                     },
                     floatingActionButton = {
-                        // Mode switching FAB
-                        FloatingActionButton(
-                            onClick = {
-                                AppState.toggleMode()
-                                // Navigate to the appropriate home screen
-                                val destination = when (AppState.currentMode) {
-                                    AppMode.SPEECH_BASED -> "speech_home"
-                                    AppMode.IMAGE_BASED -> "image_home"
-                                }
-                                navController.navigate(destination) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        inclusive = true
+                        if (shouldShowMainUI) {
+                            FloatingActionButton(
+                                onClick = {
+                                    AppState.toggleMode()
+                                    val destination = when (AppState.currentMode) {
+                                        AppMode.SPEECH_BASED -> "speech_home"
+                                        AppMode.IMAGE_BASED -> "image_home"
+                                        else -> "speech_home"
                                     }
-                                }
-                            },
-                            containerColor = MaterialTheme.colorScheme.secondary,
-                            shape = CircleShape
-                        ) {
-                            Icon(
-                                imageVector = if (currentMode == AppMode.SPEECH_BASED) 
-                                    Icons.Default.PhotoLibrary 
-                                else 
-                                    Icons.Default.Mic,
-                                contentDescription = "Cambiar modo",
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
-                            )
+                                    navController.navigate(destination) {
+                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                    }
+                                },
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                shape = CircleShape
+                            ) {
+                                Icon(
+                                    imageVector = if (currentMode == AppMode.SPEECH_BASED) Icons.Default.PhotoLibrary else Icons.Default.Mic,
+                                    contentDescription = "Switch Mode",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
                         }
                     }
                 ) { paddingValues ->
@@ -72,31 +76,16 @@ class MainActivity : ComponentActivity() {
                         startDestination = "speech_home",
                         modifier = Modifier.padding(paddingValues)
                     ) {
-                        // Prototype A - Speech-Based screens
-                        composable("speech_home") { 
-                            SpeechHomeScreen(navController) 
-                        }
-                        composable("speech_jobs") { 
-                            SpeechJobListScreen(navController) 
-                        }
-
-                        // Prototype B - Image-Based screens
-                        composable("image_home") { 
-                            ImageHomeScreen(navController) 
-                        }
-                        composable("image_jobs") { 
-                            ImageJobListScreen(navController) 
-                        }
-
-                        // Shared screens
-                        composable("receipt") { 
-                            ReceiptScreen(navController) 
-                        }
-                        composable("settings") { 
-                            SettingsScreen(navController) 
-                        }
+                        composable("speech_home") { SpeechHomeScreen(navController) }
+                        composable("image_home") { ImageHomeScreen(navController) }
+                        composable("speech_jobs") { SpeechJobListScreen(navController) }
+                        composable("image_jobs") { ImageJobListScreen(navController) }
+                        composable("receipt") { ReceiptScreen(navController) }
+                        composable("settings") { SettingsScreen(navController) }
+                        composable("employer_login") { EmployerLoginScreen(navController) }
+                        composable("employer_dashboard") { EmployerDashboardScreen(navController) }
+                        composable("add_job") { AddJobScreen(navController) }
                         
-                        // Job detail screen with argument
                         composable(
                             route = "job_detail/{jobId}",
                             arguments = listOf(navArgument("jobId") { type = NavType.IntType })
@@ -105,10 +94,7 @@ class MainActivity : ComponentActivity() {
                             JobDetailScreen(navController, jobId)
                         }
 
-                        // Keep language selection for future use
-                        composable("language") { 
-                            LanguageSelectionScreen(navController) 
-                        }
+                        composable("language") { LanguageSelectionScreen(navController) }
                     }
                 }
             }

@@ -6,14 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Payment
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,11 +26,6 @@ fun ReceiptScreen(navController: NavController) {
     val currentMode = AppState.currentMode
     val receipt = MockData.lastPaymentReceipt
     var showExportDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        UsabilityLogger.startTask("TASK2_VIEW_RECEIPT", currentMode, "View payment receipt")
-        UsabilityLogger.logNavigation("", "Receipt", currentMode)
-    }
 
     Column(
         modifier = Modifier
@@ -217,11 +205,7 @@ fun ReceiptScreen(navController: NavController) {
 
         // Export/Share button - Adapts based on mode
         Button(
-            onClick = {
-                showExportDialog = true
-                UsabilityLogger.completeTask("TASK2_VIEW_RECEIPT", currentMode, "Receipt exported")
-                UsabilityLogger.logInteraction("EXPORT_RECEIPT", currentMode)
-            },
+            onClick = { showExportDialog = true },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)

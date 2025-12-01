@@ -4,27 +4,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/**
- * Global app state manager for prototype mode switching
- */
 object AppState {
     var currentMode by mutableStateOf(AppMode.SPEECH_BASED)
         private set
-    
+
+    private var lastJobSeekerMode: AppMode = AppMode.SPEECH_BASED
+
     fun toggleMode() {
         currentMode = when (currentMode) {
             AppMode.SPEECH_BASED -> AppMode.IMAGE_BASED
             AppMode.IMAGE_BASED -> AppMode.SPEECH_BASED
+            AppMode.EMPLOYER -> lastJobSeekerMode // Should not happen, but as a fallback
         }
-        UsabilityLogger.logInteraction(
-            "MODE_SWITCH",
-            currentMode,
-            "Switched to ${currentMode.name}"
-        )
+        lastJobSeekerMode = currentMode
     }
-    
-    fun setMode(mode: AppMode) {
-        currentMode = mode
+
+    fun enterEmployerMode() {
+        // Save the current mode so we can return to it
+        if (currentMode != AppMode.EMPLOYER) {
+            lastJobSeekerMode = currentMode
+        }
+        currentMode = AppMode.EMPLOYER
+    }
+
+    fun exitEmployerMode() {
+        currentMode = lastJobSeekerMode
     }
 }
-

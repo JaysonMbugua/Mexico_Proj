@@ -6,32 +6,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Work
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.mexico_proj.*
+import com.example.mexico_proj.Job
+import com.example.mexico_proj.MockData
 import com.example.mexico_proj.ui.theme.*
 
 @Composable
 fun ImageJobListScreen(navController: NavController) {
-    LaunchedEffect(Unit) {
-        UsabilityLogger.startTask("TASK1_FIND_JOB", AppState.currentMode, "Image-based job search")
-        UsabilityLogger.logNavigation("ImageHome", "ImageJobList", AppState.currentMode)
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -88,8 +77,6 @@ fun ImageJobListScreen(navController: NavController) {
                 ImageJobCard(
                     job = job,
                     onAcceptClick = {
-                        UsabilityLogger.completeTask("TASK1_FIND_JOB", AppState.currentMode, "Job accepted: ${job.title}")
-                        UsabilityLogger.logInteraction("JOB_ACCEPT", AppState.currentMode, "Job: ${job.title}")
                         navController.navigate("job_detail/${job.id}")
                     }
                 )
@@ -145,7 +132,6 @@ fun ImageJobCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // Safety indicator icon - Large and prominent
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -157,8 +143,6 @@ fun ImageJobCard(
                     tint = iconColor,
                     modifier = Modifier.size(56.dp)
                 )
-
-                // Work icon
                 Icon(
                     imageVector = Icons.Default.Work,
                     contentDescription = "Trabajo",
@@ -169,7 +153,6 @@ fun ImageJobCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Job title - Large text
             Text(
                 text = job.title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -179,7 +162,6 @@ fun ImageJobCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Pay rate - Prominent display
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -199,7 +181,6 @@ fun ImageJobCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Location
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -219,7 +200,6 @@ fun ImageJobCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Key job details with icons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -237,7 +217,6 @@ fun ImageJobCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Accept button - Large and prominent
             Button(
                 onClick = onAcceptClick,
                 modifier = Modifier
@@ -287,4 +266,3 @@ fun JobDetailIcon(
         )
     }
 }
-

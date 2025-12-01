@@ -31,6 +31,7 @@ fun AppBottomBar(navController: NavHostController) {
             BottomTab("receipt", "Pago", Icons.Default.Description),
             BottomTab("settings", "Datos", Icons.Default.Settings)
         )
+        AppMode.EMPLOYER -> emptyList()
     }
 
     NavigationBar(

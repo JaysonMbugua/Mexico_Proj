@@ -32,7 +32,6 @@ fun SpeechHomeScreen(navController: NavController) {
     val isSpeaking by ttsManager.isSpeaking.collectAsState()
     val recognizedText by speechRecognizerManager.recognizedText.collectAsState()
     
-    // Track if welcome has been spoken
     var hasSpokenWelcome by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -44,11 +43,10 @@ fun SpeechHomeScreen(navController: NavController) {
         }
     )
 
-    // Speak welcome message on first load
     LaunchedEffect(Unit) {
         if (!hasSpokenWelcome) {
             hasSpokenWelcome = true
-            ttsManager.speak("Bienvenido, ${MockData.currentUser.name}. ¿Qué quieres hacer hoy? Puedes decir: buscar empleo, ver mi pago, o ajustes.")
+            ttsManager.speak("Bienvenido. ¿Qué quieres hacer hoy? Puedes decir: buscar empleo, ver mi pago, o ajustes.")
         }
     }
 
@@ -65,7 +63,7 @@ fun SpeechHomeScreen(navController: NavController) {
                 recognizedText.contains("ver mi pago", ignoreCase = true) ||
                 recognizedText.contains("mi pago", ignoreCase = true) ||
                 recognizedText.contains("pago", ignoreCase = true) -> {
-                    ttsManager.speak("Tu último pago fue de ${MockData.lastPaymentReceipt.netPay} pesos. El pago fue el ${MockData.lastPaymentReceipt.payPeriod}.")
+                    ttsManager.speak("Tu último pago fue de ${MockData.lastPaymentReceipt.netPay} pesos. El pago fue el ${MockData.lastPaymentReceipt.date}.")
                 }
                 recognizedText.contains("ajustes", ignoreCase = true) ||
                 recognizedText.contains("configuración", ignoreCase = true) -> {
@@ -89,7 +87,6 @@ fun SpeechHomeScreen(navController: NavController) {
         }
     }
 
-    // Animation for speaking state
     val infiniteTransition = rememberInfiniteTransition(label = "speaking")
     val speakingScale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -101,7 +98,6 @@ fun SpeechHomeScreen(navController: NavController) {
         label = "speakingScale"
     )
     
-    // Animation for listening state
     val listeningScale by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 1.1f,
@@ -130,7 +126,6 @@ fun SpeechHomeScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Speaking indicator card
         Card(
             modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
             colors = CardDefaults.cardColors(
@@ -160,7 +155,7 @@ fun SpeechHomeScreen(navController: NavController) {
                     text = if (isSpeaking) 
                         "Hablando..." 
                     else 
-                        "Bienvenido, ${MockData.currentUser.name}. ¿Qué quieres hacer hoy?",
+                        "Bienvenido. ¿Qué quieres hacer hoy?",
                     style = MaterialTheme.typography.bodyLarge, 
                     color = if (isSpeaking)
                         MaterialTheme.colorScheme.onTertiaryContainer
@@ -172,7 +167,6 @@ fun SpeechHomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        // Main microphone button
         Box(
             modifier = Modifier
                 .size(150.dp)
@@ -188,7 +182,6 @@ fun SpeechHomeScreen(navController: NavController) {
                 .clickable(enabled = !isSpeaking) {
                     if (!isSpeaking) {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        UsabilityLogger.logInteraction("MICROPHONE_TAP", AppState.currentMode, "User tapped microphone")
                     }
                 },
             contentAlignment = Alignment.Center
@@ -220,7 +213,6 @@ fun SpeechHomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Help text
         Text(
             text = "Di: \"buscar empleo\", \"ver mi pago\", o \"ayuda\"",
             style = MaterialTheme.typography.bodyMedium,
