@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.mexico_proj.* 
+import com.example.mexico_proj.*
 
 @Composable
 fun SpeechHomeScreen(navController: NavController) {
@@ -30,10 +30,12 @@ fun SpeechHomeScreen(navController: NavController) {
     val ttsManager = remember { TextToSpeechManager(context) }
     val isListening by speechRecognizerManager.isListening.collectAsState()
     val isSpeaking by ttsManager.isSpeaking.collectAsState()
-    val recognizedText by speechRecognizerManager.recognizedText.collectAsState()
     
     // Track if welcome has been spoken
     var hasSpokenWelcome by remember { mutableStateOf(false) }
+    
+    // Track last recognized text for display
+    var lastRecognizedText by remember { mutableStateOf("") }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -52,40 +54,52 @@ fun SpeechHomeScreen(navController: NavController) {
         }
     }
 
-    LaunchedEffect(recognizedText) {
-        if (recognizedText.isNotBlank()) {
-            val jobsText = MockData.jobs.joinToString(separator = ", ") { it.title }
-            when {
-                recognizedText.contains("buscar empleo", ignoreCase = true) || 
-                recognizedText.contains("buscar trabajo", ignoreCase = true) ||
-                recognizedText.contains("empleo", ignoreCase = true) ||
-                recognizedText.contains("trabajo", ignoreCase = true) -> {
-                    ttsManager.speak("Aquí están los trabajos disponibles: $jobsText. ¿Te interesa alguno?")
+    // Collect recognized text from SharedFlow - this will trigger for EVERY emission
+    LaunchedEffect(Unit) {
+        speechRecognizerManager.recognizedText.collect { recognizedText ->
+            if (recognizedText.isNotBlank()) {
+                lastRecognizedText = recognizedText
+                val jobsText = MockData.jobs.joinToString(separator = ", ") { it.title }
+                when {
+                    recognizedText.contains("buscar empleo", ignoreCase = true) || 
+                    recognizedText.contains("buscar trabajo", ignoreCase = true) ||
+                    recognizedText.contains("empleo", ignoreCase = true) ||
+                    recognizedText.contains("trabajo", ignoreCase = true) -> {
+                        ttsManager.speak("Aquí están los trabajos disponibles: $jobsText. ¿Te interesa alguno?")
+                    }
+                    recognizedText.contains("ver mi pago", ignoreCase = true) ||
+                    recognizedText.contains("mi pago", ignoreCase = true) ||
+                    recognizedText.contains("pago", ignoreCase = true) -> {
+                        ttsManager.speak("Tu último pago fue de ${MockData.lastPaymentReceipt.netPay} pesos. El pago fue el ${MockData.lastPaymentReceipt.date}.")
+                    }
+                    recognizedText.contains("ajustes", ignoreCase = true) ||
+                    recognizedText.contains("configuración", ignoreCase = true) -> {
+                        ttsManager.speak("No hay ajustes para configurar.")
+                    }
+                    recognizedText.contains("ayuda", ignoreCase = true) ||
+                    recognizedText.contains("opciones", ignoreCase = true) -> {
+                        ttsManager.speak("Puedes decir: buscar empleo para ver trabajos disponibles, ver mi pago para consultar tu último pago, o ajustes para configuración.")
+                    }
+                    recognizedText.contains("repetir", ignoreCase = true) -> {
+                        ttsManager.speak("Puedes decir: buscar empleo, ver mi pago, o ajustes.")
+                    }
+                    else -> ttsManager.speak("Escuché: $recognizedText. No entendí. Por favor, intenta de nuevo.")
                 }
-                recognizedText.contains("ver mi pago", ignoreCase = true) ||
-                recognizedText.contains("mi pago", ignoreCase = true) ||
-                recognizedText.contains("pago", ignoreCase = true) -> {
-                    ttsManager.speak("Tu último pago fue de ${MockData.lastPaymentReceipt.netPay} pesos. El pago fue el ${MockData.lastPaymentReceipt.payPeriod}.")
-                }
-                recognizedText.contains("ajustes", ignoreCase = true) ||
-                recognizedText.contains("configuración", ignoreCase = true) -> {
-                    ttsManager.speak("No hay ajustes para configurar.")
-                }
-                recognizedText.contains("ayuda", ignoreCase = true) ||
-                recognizedText.contains("opciones", ignoreCase = true) -> {
-                    ttsManager.speak("Puedes decir: buscar empleo para ver trabajos disponibles, ver mi pago para consultar tu último pago, o ajustes para configuración.")
-                }
-                recognizedText.contains("repetir", ignoreCase = true) -> {
-                    ttsManager.speak("Puedes decir: buscar empleo, ver mi pago, o ajustes.")
-                }
-                else -> ttsManager.speak("No entendí. Por favor, intenta de nuevo. Puedes decir: buscar empleo, ver mi pago, ayuda, o ajustes.")
             }
+        }
+    }
+    
+    // Collect errors from SharedFlow
+    LaunchedEffect(Unit) {
+        speechRecognizerManager.error.collect { errorMessage ->
+            ttsManager.speak(errorMessage)
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
             ttsManager.shutdown()
+            speechRecognizerManager.destroy()
         }
     }
 
