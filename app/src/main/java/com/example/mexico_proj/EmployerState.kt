@@ -10,18 +10,7 @@ object EmployerState {
     var isLoggedIn by mutableStateOf(false)
     var currentEmployer by mutableStateOf<Employer?>(null)
 
-    private val _postedJobs = mutableStateListOf<PostedJob>(
-        // Mock initial data
-        PostedJob(
-            jobId = 101,
-            title = "Supervisor de Almacén",
-            description = "Supervisar las operaciones diarias del almacén.",
-            applicants = listOf(
-                JobApplication("Elena", "USER-002", "2024-05-20"),
-                JobApplication("Carlos", "USER-003", "2024-05-21")
-            )
-        )
-    )
+    private val _postedJobs = mutableStateListOf<PostedJob>() // Initialize with an empty list
     val postedJobsState: SnapshotStateList<PostedJob> = _postedJobs
 
     fun login(employer: Employer) {

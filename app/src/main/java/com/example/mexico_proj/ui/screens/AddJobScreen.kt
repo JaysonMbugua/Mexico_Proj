@@ -11,8 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.mexico_proj.Job
-import com.example.mexico_proj.MockData
+import com.example.mexico_proj.EmployerState
+import com.example.mexico_proj.PostedJob
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,8 +55,7 @@ fun AddJobScreen(navController: NavController) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = payAmount, 
-                        onValueChange = { payAmount = it }, 
-                        label = { Text("Monto de Pago") },
+                        onValueChange = { payAmount = it },
                         leadingIcon = { Icon(Icons.Default.AttachMoney, null) }, 
                         modifier = Modifier.weight(1f)
                     )
@@ -111,9 +110,18 @@ fun AddJobScreen(navController: NavController) {
             onClick = {
                 if (title.isNotBlank() && description.isNotBlank()) {
                     val formattedPayRate = "$$payAmount MXN $selectedPayUnit"
-                    val newJob = Job(id = MockData.jobs.size + 1, title = title, description = description, payRate = formattedPayRate, location = location, hoursPerWeek = hoursPerWeek, contractType = contractType, hasBenefits = hasBenefits, isSafe = true)
-                    MockData.addJob(newJob)
-                    navController.popBackStack()
+                    val newJob = PostedJob(
+                        jobId = EmployerState.postedJobsState.size + 102,
+                        title = title,
+                        description = description,
+                        payRate = formattedPayRate,
+                        location = location,
+                        hoursPerWeek = hoursPerWeek,
+                        contractType = contractType,
+                        hasBenefits = hasBenefits
+                    )
+                    EmployerState.addJob(newJob)
+                    navController.popBackStack() // Go back to the dashboard
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp)
