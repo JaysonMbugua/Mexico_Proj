@@ -22,14 +22,14 @@ fun AppBottomBar(navController: NavHostController) {
         AppMode.SPEECH_BASED -> listOf(
             BottomTab("speech_home", "Inicio", Icons.Default.Home),
             BottomTab("speech_jobs", "Empleos", Icons.Default.Work),
-            BottomTab("receipt", "Pago", Icons.Default.Description),
-            BottomTab("settings", "Ajustes", Icons.Default.Settings)
+            BottomTab("speech_receipt", "Pago", Icons.Default.Description),
+            BottomTab("speech_settings", "Ajustes", Icons.Default.Settings)
         )
         AppMode.IMAGE_BASED -> listOf(
             BottomTab("image_home", "Inicio", Icons.Default.Home),
             BottomTab("image_jobs", "Empleos", Icons.Default.Work),
-            BottomTab("receipt", "Pago", Icons.Default.Description),
-            BottomTab("settings", "Datos", Icons.Default.Settings)
+            BottomTab("image_receipt", "Pago", Icons.Default.Description),
+            BottomTab("image_settings", "Datos", Icons.Default.Settings)
         )
         AppMode.EMPLOYER -> emptyList()
     }

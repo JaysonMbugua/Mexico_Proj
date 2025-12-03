@@ -36,14 +36,16 @@ class SpeechRecognizerManager(private val context: Context) {
 
                     override fun onError(error: Int) {
                         _isListening.value = false
-                        // Handle error
+                        // Handle error - 7 is ERROR_NO_MATCH, 6 is ERROR_SPEECH_TIMEOUT
                     }
 
                     // Other RecognitionListener methods...
                     override fun onBeginningOfSpeech() {}
                     override fun onRmsChanged(rmsdB: Float) {}
                     override fun onBufferReceived(buffer: ByteArray?) {}
-                    override fun onEndOfSpeech() {}
+                    override fun onEndOfSpeech() {
+                        _isListening.value = false
+                    }
                     override fun onPartialResults(partialResults: Bundle?) {}
                     override fun onEvent(eventType: Int, params: Bundle?) {}
                 })
@@ -53,14 +55,36 @@ class SpeechRecognizerManager(private val context: Context) {
     }
 
     fun startListening() {
+        // Stop any current listening to avoid conflicts
+        stopListening()
+        
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-MX")
+            // Increase silence timeout to allow user more time to think/speak
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000L) 
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 5000L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2000L)
         }
         getSpeechRecognizer().startListening(intent)
     }
 
     fun stopListening() {
-        getSpeechRecognizer().stopListening()
+        try {
+            speechRecognizer?.stopListening()
+        } catch (e: Exception) {
+            // Ignore if already stopped or failed
+        }
+        _isListening.value = false
+    }
+
+    fun destroy() {
+        try {
+            speechRecognizer?.destroy()
+        } catch (e: Exception) {
+            // Ignore
+        }
+        speechRecognizer = null
+        _isListening.value = false
     }
 }

@@ -1,5 +1,8 @@
 package com.example.mexico_proj.ui.screens
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -23,21 +27,72 @@ import com.example.mexico_proj.ui.theme.*
 
 @Composable
 fun SpeechJobListScreen(navController: NavController) {
-    var showVoiceInput by remember { mutableStateOf(false) }
-    var selectedJobForAudio by remember { mutableStateOf<Job?>(null) }
+    val context = LocalContext.current
+    val speechRecognizerManager = remember { SpeechRecognizerManager(context) }
+    val ttsManager = remember { TextToSpeechManager(context) }
+    val recognizedText by speechRecognizerManager.recognizedText.collectAsState()
+    val isListening by speechRecognizerManager.isListening.collectAsState()
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                // Pre-emptive stop for TTS before new sequence
+                ttsManager.stop()
+                
+                ttsManager.speak("Di el número del trabajo, por ejemplo: uno, dos, o tres.") {
+                    // Start listening only AFTER the prompt finishes speaking
+                    speechRecognizerManager.startListening()
+                }
+            }
+        }
+    )
+
+    // Handle voice commands
+    LaunchedEffect(recognizedText) {
+        if (recognizedText.isNotBlank()) {
+            val text = recognizedText.lowercase()
+            var jobIndex = -1
+            
+            when {
+                text.contains("uno") || text.contains("1") -> jobIndex = 0
+                text.contains("dos") || text.contains("2") -> jobIndex = 1
+                text.contains("tres") || text.contains("3") -> jobIndex = 2
+                text.contains("cuatro") || text.contains("4") -> jobIndex = 3
+                text.contains("cinco") || text.contains("5") -> jobIndex = 4
+                text.contains("seis") || text.contains("6") -> jobIndex = 5
+            }
+
+            if (jobIndex != -1 && jobIndex < MockData.jobs.size) {
+                val job = MockData.jobs[jobIndex]
+                ttsManager.speak("Abriendo trabajo ${jobIndex + 1}: ${job.title}")
+                navController.navigate("job_detail/${job.id}")
+            } else {
+                ttsManager.speak("No entendí el número. Por favor intenta de nuevo.")
+            }
+        }
+    }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            ttsManager.shutdown()
+            speechRecognizerManager.destroy()
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Blue50)
+            .background(MaterialTheme.colorScheme.background) // Consistent background
+            .padding(16.dp) // Consistent padding
     ) {
         // Header with audio prompt
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(bottom = 16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Blue100
+                containerColor = MaterialTheme.colorScheme.primaryContainer // Use theme colors
             )
         ) {
             Row(
@@ -50,13 +105,13 @@ fun SpeechJobListScreen(navController: NavController) {
                     Icons.Default.VolumeUp,
                     contentDescription = "Audio",
                     modifier = Modifier.size(32.dp),
-                    tint = Blue600
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "Hay ${MockData.jobs.size} empleos disponibles. Toca el ícono de audio para escuchar los detalles, o di el número del trabajo.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Blue700
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
@@ -64,14 +119,14 @@ fun SpeechJobListScreen(navController: NavController) {
         // Job list
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+            contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(MockData.jobs) { job ->
                 SpeechJobCard(
                     job = job,
                     jobNumber = MockData.jobs.indexOf(job) + 1,
                     onAudioClick = {
-                        selectedJobForAudio = job
+                        ttsManager.speak(job.description)
                     },
                     onCardClick = {
                         navController.navigate("job_detail/${job.id}")
@@ -85,9 +140,9 @@ fun SpeechJobListScreen(navController: NavController) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(top = 16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Blue100
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Column(
@@ -95,8 +150,9 @@ fun SpeechJobListScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Di el número del trabajo para ver más detalles",
+                    if (isListening) "Escuchando... Di el número" else "Di el número del trabajo para ver más detalles",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
                 
@@ -104,84 +160,21 @@ fun SpeechJobListScreen(navController: NavController) {
                     modifier = Modifier
                         .size(70.dp)
                         .clip(CircleShape)
-                        .background(Blue600)
-                        .clickable { showVoiceInput = !showVoiceInput },
+                        .background(if (isListening) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                        .clickable { 
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Mic,
                         contentDescription = "Voice",
                         modifier = Modifier.size(40.dp),
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
         }
-    }
-
-    // Voice number selection dialog
-    if (showVoiceInput) {
-        AlertDialog(
-            onDismissRequest = { showVoiceInput = false },
-            title = { Text("Seleccionar trabajo") },
-            text = {
-                Column {
-                    Text("Simula decir el número del trabajo:")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    MockData.jobs.forEachIndexed { index, job ->
-                        Button(
-                            onClick = {
-                                navController.navigate("job_detail/${job.id}")
-                                showVoiceInput = false
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        ) {
-                            Text("${index + 1}. ${job.title}")
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showVoiceInput = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    // Job audio playback dialog
-    if (selectedJobForAudio != null) {
-        AlertDialog(
-            onDismissRequest = { selectedJobForAudio = null },
-            icon = {
-                Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(48.dp))
-            },
-            title = { Text("Reproduciendo descripción") },
-            text = {
-                Column {
-                    Text(
-                        "🔊 Audio (simulado):",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("\"${selectedJobForAudio?.description}\"")
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Blue600
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { selectedJobForAudio = null }) {
-                    Text("Cerrar")
-                }
-            }
-        )
     }
 }
 
@@ -197,7 +190,7 @@ fun SpeechJobCard(
             .fillMaxWidth()
             .clickable(onClick = onCardClick),
         colors = CardDefaults.cardColors(
-            containerColor = Blue100
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -212,7 +205,7 @@ fun SpeechJobCard(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        Blue600,
+                        MaterialTheme.colorScheme.primary,
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -220,7 +213,7 @@ fun SpeechJobCard(
                 Text(
                     text = "$jobNumber",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -232,13 +225,14 @@ fun SpeechJobCard(
                 Text(
                     text = job.title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = job.payRate,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Blue600,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -249,7 +243,7 @@ fun SpeechJobCard(
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        Blue100,
+                        MaterialTheme.colorScheme.secondaryContainer,
                         CircleShape
                     )
             ) {
@@ -257,7 +251,7 @@ fun SpeechJobCard(
                     Icons.Default.VolumeUp,
                     contentDescription = "Play audio description",
                     modifier = Modifier.size(32.dp),
-                    tint = Blue600
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
         }

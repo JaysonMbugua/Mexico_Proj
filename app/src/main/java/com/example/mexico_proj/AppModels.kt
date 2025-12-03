@@ -89,7 +89,7 @@ object MockData {
         netPay = 3600.0,
         grossPay = 4200.0,
         deductions = 600.0,
-        date = "15 de Noviembre, 2024",
+        date = "15 de Noviembre, 2025",
         breakdown = listOf(
             PaymentBreakdownItem("Salario Base", 4200.0),
             PaymentBreakdownItem("Seguro Social", -300.0),

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mexico_proj.* 
+import com.example.mexico_proj.ui.theme.*
 
 @Composable
 fun SpeechHomeScreen(navController: NavController) {
@@ -32,23 +33,26 @@ fun SpeechHomeScreen(navController: NavController) {
     val isSpeaking by ttsManager.isSpeaking.collectAsState()
     val recognizedText by speechRecognizerManager.recognizedText.collectAsState()
     
-    var hasSpokenWelcome by remember { mutableStateOf(false) }
+    // Track button press to debounce or manage state
+    var isProcessingClick by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
-                speechRecognizerManager.startListening()
-            } 
+                // Ensure TTS is stopped before starting new sequence
+                ttsManager.stop()
+                
+                // When manually triggered, we can speak a prompt then listen
+                ttsManager.speak("¿Qué quieres hacer hoy?") {
+                    speechRecognizerManager.startListening()
+                    isProcessingClick = false
+                }
+            } else {
+                isProcessingClick = false
+            }
         }
     )
-
-    LaunchedEffect(Unit) {
-        if (!hasSpokenWelcome) {
-            hasSpokenWelcome = true
-            ttsManager.speak("Bienvenido. ¿Qué quieres hacer hoy? Puedes decir: buscar empleo, ver mi pago, o ajustes.")
-        }
-    }
 
     LaunchedEffect(recognizedText) {
         if (recognizedText.isNotBlank()) {
@@ -84,6 +88,7 @@ fun SpeechHomeScreen(navController: NavController) {
     DisposableEffect(Unit) {
         onDispose {
             ttsManager.shutdown()
+            speechRecognizerManager.destroy() // Added proper cleanup
         }
     }
 
@@ -179,8 +184,10 @@ fun SpeechHomeScreen(navController: NavController) {
                 )
                 .clip(CircleShape)
                 .background(buttonColor)
-                .clickable(enabled = !isSpeaking) {
-                    if (!isSpeaking) {
+                .clickable(enabled = !isSpeaking && !isProcessingClick) {
+                    if (!isSpeaking && !isProcessingClick) {
+                        isProcessingClick = true
+                        // Logic to start listening or request permission
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
                 },

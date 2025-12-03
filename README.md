@@ -9,35 +9,36 @@ This Android application is designed for a comparative usability study to test t
 - **Minimum SDK**: 24
 - **Architecture**: Single-Activity with Jetpack Compose UI
 - **Data**: Hardcoded mock data (offline-first, no external APIs)
-- **Navigation**: Navigation Compose with fragment-like screen management
+- **Navigation**: Navigation Compose with smart context preservation
+- **Audio**: Android `TextToSpeech` and `SpeechRecognizer` APIs
 
 ## Features
 
 ### Prototype A: Speech-Based Interface (Blue Theme)
 **Color**: Blue (#2563EB - Blue 600)  
-**Interaction Model**: Voice-command simulation with audio feedback
+**Interaction Model**: Voice-first interaction with real-time audio feedback and command recognition.
 
 #### Screens:
 1. **Speech Home Screen**
    - Large microphone button for voice interaction
-   - Audio prompt: "Bienvenido, Juan. ¿Qué quieres hacer hoy?"
-   - Simulated voice commands for navigation
-   - Minimal text, maximum audio cues
+   - Voice prompt: "Bienvenido... ¿Qué quieres hacer hoy?"
+   - Real voice command recognition for navigation ("buscar empleo", "ver mi pago", etc.)
+   - Clean, minimal UI focused on audio cues
 
 2. **Speech Job List Screen**
    - Three job listings with minimal text
-   - Audio playback icons for job descriptions (simulated TTS)
-   - Voice-based job selection (number-based)
-   - Large numbered badges for each job
+   - Audio playback icons for full job descriptions (Text-to-Speech)
+   - Voice-based job selection (e.g., saying "uno", "dos" opens the corresponding job)
+   - Large numbered badges for easy voice referencing
 
 3. **Receipt Screen (Blue Mode)**
-   - Audio instruction prompts
+   - Clickable audio instruction card that reads full receipt details via TTS
    - Large, clear display of net pay and deductions
-   - "Pedir por Voz" button for voice-based receipt request
+   - Optimized for listening rather than reading
 
 ### Prototype B: Image-Based Interface (Green Theme)
 **Color**: Green (#16A34A - Green 600)  
-**Interaction Model**: Icon-driven navigation with visual safety indicators
+**Interaction Model**: Icon-driven navigation with visual safety indicators.
 
 #### Screens:
 1. **Image Home Screen**
@@ -63,6 +64,7 @@ This Android application is designed for a comparative usability study to test t
 1. **Job Detail Screen**
    - Comprehensive job information
    - Safety indicators
+   - **Audio Feature**: Clicking the description card reads the full text aloud (TTS)
    - Contract acceptance functionality
    - Works with both prototypes (adapts to current theme)
 
@@ -70,52 +72,13 @@ This Android application is designed for a comparative usability study to test t
    - User profile display
    - Current mode indicator
    - Usability metrics viewer
-   - Mock user data (Name: Juan, Literacy Level: Bajo)
+   - Team credits footer
 
-### Mode Switching
-- **Floating Action Button (FAB)**: Always visible in bottom-right corner
-- Instantly switches between Prototype A (Blue/Speech) and Prototype B (Green/Image)
-- Switches entire UI theme, navigation, and interaction patterns
-- Icon changes based on current mode:
-  - Blue mode shows Image icon (to switch to image mode)
-  - Green mode shows Mic icon (to switch to speech mode)
-
-## Usability Logging System
-
-The `UsabilityLogger` singleton tracks:
-
-### Task Completion Time (TCT)
-- Records start and completion timestamps for each task
-- Automatically calculates duration in milliseconds
-- Tasks tracked:
-  - `TASK1_FIND_JOB`: Finding and selecting a job with benefits
-  - `TASK2_VIEW_RECEIPT`: Viewing payment receipt
-  - `TASK3_ACCEPT_CONTRACT`: Accepting a job contract
-
-### Task Error Rate (TER)
-- Logs errors during task execution
-- Counts errors per task
-- Records error details and context
-
-### Additional Metrics
-- Navigation events (screen transitions)
-- User interactions (button clicks, voice commands)
-- Mode switches
-- Timestamp for all events
-
-### Accessing Logs
-1. Navigate to Settings screen
-2. Click "Ver Métricas de Usabilidad" button
-3. View summary of all recorded metrics
-4. Logs can be exported to CSV format for analysis
-
-### Log Export
-The logger can save data to CSV format with the following fields:
-- Task ID
-- Prototype Mode
-- Event Type
-- Timestamp
-- Details
+### Smart Mode Switching
+- **Floating Action Button (FAB)**: Always visible in bottom-right corner.
+- **Context Preservation**: Switching modes intelligently preserves your navigation state. 
+  - If you are viewing the *Job List* in Image mode and switch to Speech mode, you remain on the *Job List* (now in Speech mode).
+  - Navigation stack is managed to prevent deep history loops.
 
 ## Mock Data
 
@@ -148,69 +111,12 @@ The logger can save data to CSV format with the following fields:
    - Hours: 48/week
    - Contract: Permanent
 
-### Payment Receipt
-- Gross Pay: $4,200 MXN
-- Net Pay: $3,600 MXN
-- Deductions: $600 MXN
-- Date: 15 de Noviembre, 2024
-
-## User Study Tasks
-
-### Task 1: Find a Job with Benefits
-**Objective**: Navigate to job listings and identify the job with safety benefits.
-
-**Success Criteria**:
-- User navigates to job list
-- User identifies job with benefits (visual or audio cues)
-- User views job details
-
-**Logged Metrics**: Time from task start to job selection, errors/wrong selections
-
-### Task 2: View Payment Receipt
-**Objective**: Access and understand the payment receipt.
-
-**Success Criteria**:
-- User navigates to receipt screen
-- User views net pay and deductions
-- User understands the breakdown
-
-**Logged Metrics**: Time to access receipt, navigation errors
-
-### Task 3: Accept a Job Contract
-**Objective**: Review job details and accept a contract.
-
-**Success Criteria**:
-- User views full job details
-- User clicks "Accept Contract" button
-- User confirms acceptance
-
-**Logged Metrics**: Time from job detail view to acceptance, hesitation indicators
-
-## Navigation Structure
-
-```
-Main Activity (with FAB for mode switching)
-│
-├── Prototype A (Speech-Based)
-│   ├── Speech Home
-│   ├── Speech Job List
-│   └── (Shared screens)
-│
-├── Prototype B (Image-Based)
-│   ├── Image Home
-│   ├── Image Job List
-│   └── (Shared screens)
-│
-└── Shared Screens
-    ├── Receipt Screen (adapts to current mode)
-    ├── Job Detail Screen (adapts to current mode)
-    └── Settings Screen
-```
-
-## Bottom Navigation
-Adapts based on current prototype mode:
-- **Prototype A**: Inicio | Empleos | Pago | Ajustes
-- **Prototype B**: Inicio | Empleos | Pago | Datos
+## Team Credits
+Made with ❤️ by:
+- Chigozie Nnani
+- Bryen Alvarez
+- Jayson Mbugua
+- Adam Sherif
 
 ## Running the Application
 
@@ -218,60 +124,26 @@ Adapts based on current prototype mode:
 - Android Studio Hedgehog or later
 - JDK 11 or later
 - Android SDK 34+
+- A device/emulator with microphone support (for Speech features)
 
 ### Build and Run
-1. Open project in Android Studio
-2. Sync Gradle files
-3. Select a device/emulator (API 24+)
-4. Click Run
+1. Open project in Android Studio.
+2. Sync Gradle files.
+3. Select a device/emulator (API 24+).
+4. Click Run.
 
-### For Testing
-1. Start with Prototype A (Speech-Based, Blue theme)
-2. Complete all three tasks
-3. Use FAB to switch to Prototype B (Image-Based, Green theme)
-4. Complete all three tasks again
-5. View metrics in Settings screen
-6. Export logs for analysis
-
-## Key Design Decisions
-
-### For Low-Literacy Users
-1. **Large Touch Targets**: All interactive elements are 48dp+ for easy tapping
-2. **High Contrast**: Clear visual separation between elements
-3. **Consistent Patterns**: Repeated interaction patterns throughout
-4. **Minimal Text**: Essential information only in Prototype A
-5. **Universal Icons**: Internationally recognized symbols in Prototype B
-6. **Audio Simulation**: TTS simulation for Prototype A (actual TTS can be added)
-
-### For Usability Study
-1. **Non-Intrusive Logging**: All logging happens in background
-2. **Precise Timing**: Millisecond accuracy for TCT
-3. **Context Preservation**: All events include contextual details
-4. **Easy Export**: CSV format for statistical analysis
-5. **A/B Testing Ready**: Instant switching between prototypes
-
-## Future Enhancements
-
-### Phase 2 Considerations
-- Real TTS integration (Android Speech API)
-- Real speech recognition for voice commands
-- Firebase/Firestore integration for remote logging
-- Multi-language support (Spanish, Indigenous languages)
-- Real job data API integration
-- Authentication system
-- Payment history
-- Contract management
-- Push notifications for job updates
+*Note: For the best experience with Voice Commands, ensure your emulator or device has microphone permissions enabled and audio output active.*
 
 ## Code Structure
 
 ```
 app/src/main/java/com/example/mexico_proj/
 │
-├── MainActivity.kt                 # Main entry point with navigation
+├── MainActivity.kt                 # Main entry point with smart navigation
 ├── AppModels.kt                    # Data models and mock data
 ├── AppState.kt                     # Global state management
-├── AppSettings.kt                  # Settings manager
+├── TextToSpeechManager.kt          # TTS implementation
+├── SpeechRecognizerManager.kt      # Voice recognition implementation
 ├── UsabilityLogger.kt              # Logging system
 │
 ├── ui/
@@ -280,12 +152,12 @@ app/src/main/java/com/example/mexico_proj/
 │   │   └── BottomTab.kt           # Tab data class
 │   │
 │   ├── screens/
-│   │   ├── SpeechHomeScreen.kt    # Prototype A home
-│   │   ├── SpeechJobListScreen.kt # Prototype A job list
-│   │   ├── ImageHomeScreen.kt     # Prototype B home
-│   │   ├── ImageJobListScreen.kt  # Prototype B job list
-│   │   ├── ReceiptScreen.kt       # Shared receipt (adaptive)
-│   │   ├── JobDetailScreen.kt     # Shared job detail
+│   │   ├── SpeechHomeScreen.kt    # Prototype A home (Voice)
+│   │   ├── SpeechJobListScreen.kt # Prototype A job list (Voice)
+│   │   ├── ImageHomeScreen.kt     # Prototype B home (Touch)
+│   │   ├── ImageJobListScreen.kt  # Prototype B job list (Touch)
+│   │   ├── ReceiptScreen.kt       # Shared receipt (adaptive + audio)
+│   │   ├── JobDetailScreen.kt     # Shared job detail (adaptive + audio)
 │   │   └── SettingsScreen.kt      # User profile & metrics
 │   │
 │   └── theme/
@@ -296,7 +168,3 @@ app/src/main/java/com/example/mexico_proj/
 
 ## License
 This is a research project for usability studies. All rights reserved.
-
-## Contact
-For questions about the study or technical implementation, please contact the research team.
-

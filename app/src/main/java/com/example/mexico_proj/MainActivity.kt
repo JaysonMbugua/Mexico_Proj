@@ -34,7 +34,10 @@ class MainActivity : ComponentActivity() {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             val shouldShowMainUI = currentRoute in listOf(
-                "speech_home", "image_home", "speech_jobs", "image_jobs", "receipt", "settings"
+                "speech_home", "image_home", 
+                "speech_jobs", "image_jobs", 
+                "speech_receipt", "image_receipt", 
+                "speech_settings", "image_settings"
             )
 
             MexicoProjTheme(appMode = currentMode) {
@@ -48,14 +51,36 @@ class MainActivity : ComponentActivity() {
                         if (shouldShowMainUI) {
                             FloatingActionButton(
                                 onClick = {
+                                    val newMode = if (AppState.currentMode == AppMode.SPEECH_BASED) 
+                                        AppMode.IMAGE_BASED 
+                                    else 
+                                        AppMode.SPEECH_BASED
+                                    
                                     AppState.toggleMode()
-                                    val destination = when (AppState.currentMode) {
-                                        AppMode.SPEECH_BASED -> "speech_home"
-                                        AppMode.IMAGE_BASED -> "image_home"
-                                        else -> "speech_home"
+
+                                    // Smart navigation to preserve state
+                                    val targetRoute = when (currentRoute) {
+                                        "speech_home" -> if (newMode == AppMode.IMAGE_BASED) "image_home" else null
+                                        "image_home" -> if (newMode == AppMode.SPEECH_BASED) "speech_home" else null
+                                        "speech_jobs" -> if (newMode == AppMode.IMAGE_BASED) "image_jobs" else null
+                                        "image_jobs" -> if (newMode == AppMode.SPEECH_BASED) "speech_jobs" else null
+                                        "speech_receipt" -> if (newMode == AppMode.IMAGE_BASED) "image_receipt" else null
+                                        "image_receipt" -> if (newMode == AppMode.SPEECH_BASED) "speech_receipt" else null
+                                        "speech_settings" -> if (newMode == AppMode.IMAGE_BASED) "image_settings" else null
+                                        "image_settings" -> if (newMode == AppMode.SPEECH_BASED) "speech_settings" else null
+                                        else -> null
                                     }
-                                    navController.navigate(destination) {
-                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+
+                                    if (targetRoute != null) {
+                                        navController.navigate(targetRoute) {
+                                            // Pop up to the start destination of the graph to avoid building up a large stack
+                                            // but preserve the state of the new destination if possible or just swap
+                                            popUpTo(navController.graph.startDestinationId) { 
+                                                saveState = true 
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
                                 },
                                 containerColor = MaterialTheme.colorScheme.secondary,
@@ -80,8 +105,15 @@ class MainActivity : ComponentActivity() {
                         composable("image_home") { ImageHomeScreen(navController) }
                         composable("speech_jobs") { SpeechJobListScreen(navController) }
                         composable("image_jobs") { ImageJobListScreen(navController) }
-                        composable("receipt") { ReceiptScreen(navController) }
-                        composable("settings") { SettingsScreen(navController) }
+                        
+                        // Split routes for receipt to enable smooth transitions
+                        composable("speech_receipt") { ReceiptScreen(navController) }
+                        composable("image_receipt") { ReceiptScreen(navController) }
+                        
+                        // Split routes for settings to enable smooth transitions
+                        composable("speech_settings") { SettingsScreen(navController) }
+                        composable("image_settings") { SettingsScreen(navController) }
+                        
                         composable("employer_login") { EmployerLoginScreen(navController) }
                         composable("employer_dashboard") { EmployerDashboardScreen(navController) }
                         composable("add_job") { AddJobScreen(navController) }
