@@ -1,4 +1,4 @@
-# Mexico Migrant Worker Usability Study MVP
+# Mexico Migrant Worker Usability Study Kotlin App
 
 ## Overview
 This Android application is designed for a comparative usability study to test two different interface prototypes for low-literacy migrant workers in Mexico. The app allows users to complete critical tasks related to job searching, payment review, and contract acceptance while accurately logging usability metrics.
